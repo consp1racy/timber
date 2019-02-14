@@ -78,8 +78,14 @@ object Timber {
 
 inline fun Timber.log(priority: Int, throwable: Throwable? = null, message: () -> String) {
   if (isLoggable(priority, null)) {
-    rawLog(priority, null, throwable, message())
+    log(priority, null, throwable, message())
   }
+}
+
+inline fun Timber.log(priority: Int, throwable: Throwable) {
+    if (isLoggable(priority, null)) {
+        log(priority, null, throwable, null)
+    }
 }
 
 inline fun Timber.assert(throwable: Throwable? = null, message: () -> String) {

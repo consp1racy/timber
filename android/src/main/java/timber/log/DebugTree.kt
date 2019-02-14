@@ -2,6 +2,7 @@ package timber.log
 
 import android.os.Build
 import android.util.Log
+import timber.log.legacy.LegacyTree
 import java.util.regex.Pattern
 
 private const val MAX_TAG_LENGTH = 23
@@ -66,16 +67,22 @@ open class DebugTree(private val tag: String? = null) : Tree() {
     }
 
     private fun callStackOffset(stackTrace: Array<StackTraceElement>): Int {
+        var result = 0
         var klazz: Class<in DebugTree> = javaClass
         while (klazz != DebugTree::class.java) {
             // This allows proper tag inference from subclasses.
             val offset = stackTrace.indexOfLast { it.className == javaClass.name }
             if (offset != -1) {
-                return offset - 1
+                result = offset - 1
+                break
             }
             @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             klazz = klazz.superclass
         }
-        return 0
+        if (stackTrace.indexOfFirst { it.className == LegacyTree::class.java.name } != -1) {
+            // This allows proper tag inference from legacy accessors.
+            result += 3
+        }
+        return result
     }
 }

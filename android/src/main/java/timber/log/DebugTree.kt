@@ -13,7 +13,7 @@ private val ANONYMOUS_CLASS = Pattern.compile("(\\$\\d+)+$")
  *
  * @param tag If provided, will check [Log.isLoggable] with specified tag as argument.
  */
-class DebugTree(private val tag: String? = null) : Tree() {
+open class DebugTree(private val tag: String? = null) : Tree() {
 
     init {
         require(tag == null || tag.length <= MAX_TAG_LENGTH) { "Tag must be shorter than ${MAX_TAG_LENGTH + 1} characters." }
@@ -58,10 +58,24 @@ class DebugTree(private val tag: String? = null) : Tree() {
         // DO NOT switch this to Thread.getCurrentThread().getStackTrace(). The test will pass
         // because Robolectric runs them on the JVM but on Android the elements are different.
         val stackTrace = Throwable().stackTrace
-        if (stackTrace.size <= CALL_STACK_INDEX) {
+        val callStackIndex = CALL_STACK_INDEX + callStackOffset(stackTrace)
+        if (stackTrace.size <= callStackIndex) {
             throw IllegalStateException("Synthetic stacktrace didn't have enough elements: are you using proguard?")
         }
-        return createStackElementTag(stackTrace[CALL_STACK_INDEX])
+        return createStackElementTag(stackTrace[callStackIndex])
     }
 
+    private fun callStackOffset(stackTrace: Array<StackTraceElement>): Int {
+        var klazz: Class<in DebugTree> = javaClass
+        while (klazz != DebugTree::class.java) {
+            // This allows proper tag inference from subclasses.
+            val offset = stackTrace.indexOfLast { it.className == javaClass.name }
+            if (offset != -1) {
+                return offset - 1
+            }
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
+            klazz = klazz.superclass
+        }
+        return 0
+    }
 }

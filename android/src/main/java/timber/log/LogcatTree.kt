@@ -79,8 +79,8 @@ class LogcatTree @JvmOverloads constructor(private val defaultTag: String = "App
 
   private fun String?.asSafeTag(): String {
     val tag = this ?: defaultTag
-    // Tag length limit was removed in API 24.
-    if (Build.VERSION.SDK_INT < 24 && tag.length > MAX_TAG_LENGTH) {
+    // Tag length limit was removed in API 26.
+    if (Build.VERSION.SDK_INT < 26 && tag.length > MAX_TAG_LENGTH) {
       return tag.substring(0, MAX_TAG_LENGTH)
     }
     return tag

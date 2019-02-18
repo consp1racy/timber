@@ -29,10 +29,19 @@ class LogcatTree @JvmOverloads constructor(private val defaultTag: String = "App
     override fun performLog(priority: Int, tag: String?, throwable: Throwable?, message: String?) {
       this@LogcatTree.performLog(priority, tag, throwable, message)
     }
+
+    private fun String?.asSafeTag(): String {
+      val tag = this ?: defaultTag
+      // Tag length limit was removed in API 26.
+      if (Build.VERSION.SDK_INT < 26 && tag.length > MAX_TAG_LENGTH) {
+          return tag.substring(0, MAX_TAG_LENGTH)
+      }
+      return tag
+    }
   }
 
   override fun performLog(priority: Int, tag: String?, throwable: Throwable?, message: String?) {
-    val safeTag = tag.asSafeTag()
+    val safeTag = tag ?: defaultTag
 
     val fullMessage = if (message != null) {
       if (throwable != null) {
@@ -75,15 +84,6 @@ class LogcatTree @JvmOverloads constructor(private val defaultTag: String = "App
       } while (i < newline)
       i++
     }
-  }
-
-  private fun String?.asSafeTag(): String {
-    val tag = this ?: defaultTag
-    // Tag length limit was removed in API 26.
-    if (Build.VERSION.SDK_INT < 26 && tag.length > MAX_TAG_LENGTH) {
-      return tag.substring(0, MAX_TAG_LENGTH)
-    }
-    return tag
   }
 
   private val Throwable.stackTraceString get(): String {
